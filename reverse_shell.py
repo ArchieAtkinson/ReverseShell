@@ -7,35 +7,41 @@ import termios
 import logging
 
 # ANSI escape codes for moving the cursor
-ESC = '\033'
-clear_screen = f'{ESC}[2J'
-erase_saved_lines = f'{ESC}[3J'
-move_cursor_home = f'{ESC}[H'
+ESC = "\033"
+clear_screen = f"{ESC}[2J"
+erase_saved_lines = f"{ESC}[3J"
+move_cursor_home = f"{ESC}[H"
 
 logger = logging.getLogger()
 
+
 def move_cursor_up(lines=1):
-    return f'{ESC}[{lines}A'
+    return f"{ESC}[{lines}A"
+
 
 def move_cursor_to_start_of_line():
-    return f'{ESC}[1G'
+    return f"{ESC}[1G"
+
 
 def clear_terminal():
     return clear_screen + move_cursor_home
 
+
 def is_child_process(pid):
     return pid == 0
+
 
 def read_stdin(parent_fd):
     input_data = os.read(sys.stdin.fileno(), 1024)
     logger.info(f"input_data:{input_data}")
     os.write(parent_fd, input_data)
 
+
 def read_parent(parent_fd, history):
     output_data = os.read(parent_fd, 1024)
     if output_data:
-        cleaned_text = output_data.replace(clear_screen.encode(), b'')
-        cleaned_text = cleaned_text.replace(erase_saved_lines.encode(), b'')
+        cleaned_text = output_data.replace(clear_screen.encode(), b"")
+        cleaned_text = cleaned_text.replace(erase_saved_lines.encode(), b"")
         history += cleaned_text
 
         if b"clear\r" in history:
@@ -43,12 +49,11 @@ def read_parent(parent_fd, history):
 
         temp_string = b""
         if b"\r" in output_data:
-            lines = history.split(b'\n')
+            lines = history.split(b"\n")
             reversed_lines = lines[::-1]
-            reversed_byte_string = b'\n'.join(reversed_lines)
+            reversed_byte_string = b"\n".join(reversed_lines)
             temp_string += reversed_byte_string
             temp_string += move_cursor_home.encode()
-            # temp_string += (len(lines)-1)*f'{ESC}M'.encode()
             os.write(sys.stdout.fileno(), clear_terminal().encode())
         else:
             temp_string += output_data
@@ -60,10 +65,8 @@ def read_parent(parent_fd, history):
         return None
 
 
-
-
 def read_shell(parent_fd):
-    history = b""  
+    history = b""
     while True:
         r, _, _ = select.select([sys.stdin, parent_fd], [], [])
         if sys.stdin in r:
@@ -90,17 +93,20 @@ def spawn():
         os.dup2(child_fd, sys.stdout.fileno())
         os.dup2(child_fd, sys.stderr.fileno())
         os.close(child_fd)
-        os.execve(env["SHELL"],[env["SHELL"]], env)
+        os.execve(env["SHELL"], [env["SHELL"]], env)
         # Does not get passed here
     else:
         logger.info(f"In Parent Process")
         os.close(child_fd)
         return parent_fd, pid
 
+
 def interactive_shell():
     logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(process)d | %(message)s')
-    file_handler = logging.FileHandler('logs.log')
+    formatter = logging.Formatter(
+        "%(asctime)s | %(levelname)s | %(process)d | %(message)s"
+    )
+    file_handler = logging.FileHandler("logs.log")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
@@ -122,6 +128,7 @@ def interactive_shell():
         # Wait for the child process to finish
         os.waitpid(parent_pid, 0)
     os.write(sys.stdout.fileno(), clear_terminal().encode())
+
 
 # Run the interactive shell
 interactive_shell()

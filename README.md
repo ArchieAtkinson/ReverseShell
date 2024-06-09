@@ -1,6 +1,6 @@
 # Reverse Shell
 
-* Toy project, not for general usage*
+**Toy project, not for general usage**
 
 Modifies the terminal output grow from top to bottom. 
 
@@ -37,4 +37,5 @@ To exit the Reverse Shell, type `exit`
 ## Todo
 
 - Fix issue when output is larger the terminal window
+  - Ran into issue due to ANSI escape characters and wrapping the text
 - Implement own scrolling to allow larger history 
